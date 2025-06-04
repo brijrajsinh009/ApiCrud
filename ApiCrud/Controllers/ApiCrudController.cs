@@ -13,6 +13,7 @@ public class ApiCrudController : ControllerBase
 
     private readonly IApiCrudService _apiCRUDService;
     private readonly ITokenService _tokenService;
+    ApiResponseModel responseModel = new ApiResponseModel { };
 
     public ApiCrudController(IApiCrudService apiCRUDService, ITokenService tokenService)
     {
@@ -24,36 +25,68 @@ public class ApiCrudController : ControllerBase
     [HttpPost("Login", Name = "Login")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public IActionResult Login([FromBody] LoginDetails model)
     {
-        bool isAuth;
-        string message;
-        (isAuth, message) = _apiCRUDService.Authenticate(model);
-        if (!isAuth)
+        try
         {
-            return BadRequest(new { Message = message });
+            if (!ModelState.IsValid)
+            {
+                responseModel.Message = "Model state is not valid.";
+                responseModel.Success = false;
+                return BadRequest(responseModel);
+            }
+            string token = _apiCRUDService.Authenticate(model);
+            _tokenService.SaveJWTToken(Response, token);
+            _tokenService.SaveRefreshJWTToken(Response, _tokenService.GenerateRefreshToken(model.UserEmail));
+            responseModel.Message = "Logged in";
+            responseModel.Success = true;
+            return Ok(responseModel);
         }
-        _tokenService.SaveJWTToken(Response, message);
-        _tokenService.SaveRefreshJWTToken(Response, _tokenService.GenerateRefreshToken(model.UserEmail));
-        return Ok(new { Message = "Logged in" });
+        catch (UnauthorizedAccessException ex)
+        {
+            responseModel.Message = ex.Message;
+            responseModel.Success = false;
+            return StatusCode(StatusCodes.Status401Unauthorized, responseModel);
+        }
+        catch (Exception ex)
+        {
+            responseModel.Message = ex.Message;
+            responseModel.Success = false;
+            return StatusCode(StatusCodes.Status500InternalServerError, responseModel);
+        }
     }
-
 
 
     [HttpGet("Books", Name = "GetBooks")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [CutomAuth]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    // [CutomAuth]
     public IActionResult GetBooks()
     {
-        IEnumerable<BookViewModel> books = _apiCRUDService.GetAllBooks();
-        if (books.Count() == 0)
+        try
         {
-            return BadRequest();
+            IEnumerable<BookViewModel> books = _apiCRUDService.GetAllBooks();
+            if (books.Count() == 0)
+            {
+                responseModel.Message = "No Books.";
+                responseModel.Success = false;
+                return NotFound(responseModel);
+            }
+            responseModel.Message = "All Books.";
+            responseModel.Success = true;
+            responseModel.Data = books;
+            return Ok(responseModel);
         }
-        return Ok(books);
+        catch (Exception ex)
+        {
+            responseModel.Message = ex.Message;
+            responseModel.Success = false;
+            return StatusCode(StatusCodes.Status500InternalServerError, responseModel);
+        }
     }
-
 
 
     [HttpPost("AddBook", Name = "AddBook")]
@@ -63,69 +96,107 @@ public class ApiCrudController : ControllerBase
     [CutomAuth]
     public IActionResult AddBook([FromBody] BookViewModel newBook)
     {
-        if (!ModelState.IsValid)
+        try
         {
-            return BadRequest(ModelState);
+            if (!ModelState.IsValid)
+            {
+                responseModel.Message = "Model state is not valid.";
+                responseModel.Success = false;
+                return BadRequest(responseModel);
+            }
+             if (newBook.Id != 0)
+            {
+                responseModel.Message = "Id not valid!";
+                responseModel.Success = false;
+                return BadRequest(responseModel);
+            }
+            BookCrudResponseModel response = _apiCRUDService.AddBook(newBook);
+            responseModel.Message = response.Message;
+            responseModel.Success = true;
+            responseModel.Data = response.Id;
+            return Ok(response);
         }
-        if (newBook.Id > 0)
+        catch (Exception ex)
         {
-            return BadRequest();
+            responseModel.Message = ex.Message;
+            responseModel.Success = false;
+            return StatusCode(StatusCodes.Status500InternalServerError, responseModel);
         }
-        bool isAdded;
-        int id;
-        string message;
-        (isAdded, id, message) = _apiCRUDService.AddBook(newBook);
-        if (!isAdded)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError);
-        }
-        return Ok(new { Id = id, Message = message });
     }
-
 
 
     [HttpDelete("DeleteBook", Name = "DeleteBook")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public IActionResult DeleteBook(int id)
     {
-        if (id == 0)
+        try
         {
-            return BadRequest();
+            if (id <= 0)
+            {
+                responseModel.Message = "Id not valid!";
+                responseModel.Success = false;
+                return BadRequest(responseModel);
+            }
+            BookCrudResponseModel response = _apiCRUDService.DeleteBook(id);
+            responseModel.Message = response.Message;
+            responseModel.Success = true;
+            return Ok(responseModel);
         }
-        bool isDeleted;
-        string message;
-        (isDeleted, message) = _apiCRUDService.DeleteBook(id);
-        if (!isDeleted)
+        catch (KeyNotFoundException ex)
         {
-            return BadRequest(new { Id = id, Message = message });
+            responseModel.Message = ex.Message;
+            responseModel.Success = false;
+            return NotFound(responseModel);
         }
-        return Ok(new { Id = id, Message = message });
+        catch (Exception ex)
+        {
+            responseModel.Message = ex.Message;
+            responseModel.Success = false;
+            return StatusCode(StatusCodes.Status500InternalServerError, responseModel);
+        }
     }
-
 
 
     [HttpPost("UpdateBook", Name = "UpdateBook")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public IActionResult UpdateBook([FromBody] BookViewModel book)
     {
-        if (!ModelState.IsValid)
+        try
         {
-            return BadRequest(ModelState);
+            if (!ModelState.IsValid)
+            {
+                responseModel.Message = "Model state is not valid.";
+                responseModel.Success = false;
+                return BadRequest(responseModel);
+            }
+            if (book.Id <= 0)
+            {
+                responseModel.Message = "Id not valid!";
+                responseModel.Success = false;
+                return BadRequest(responseModel);
+            }
+            BookCrudResponseModel response = _apiCRUDService.UpdateBook(book);
+            responseModel.Message = response.Message;
+            responseModel.Success = true;
+            return Ok(responseModel);
         }
-        if (book.Id == 0)
+        catch (KeyNotFoundException ex)
         {
-            return BadRequest();
+            responseModel.Message = ex.Message;
+            responseModel.Success = false;
+            return NotFound(responseModel);
         }
-        bool isUpdate;
-        int id;
-        string message;
-        (isUpdate, id, message) = _apiCRUDService.UpdateBook(book);
-        if (!isUpdate)
+        catch (Exception ex)
         {
-            return BadRequest(new { Id = id, Message = message });
+            responseModel.Message = ex.Message;
+            responseModel.Success = false;
+            return StatusCode(StatusCodes.Status500InternalServerError, responseModel);
         }
-        return Ok(new { Id = id, Message = message });
     }
 }

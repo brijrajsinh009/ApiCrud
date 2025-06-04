@@ -17,6 +17,7 @@ public class CutomAuth : Attribute, IAuthorizationFilter
         var userData = context.HttpContext.RequestServices.GetService(typeof(IUserRepo)) as IUserRepo;
 
         var token = jwtService.GetJWTToken(context.HttpContext.Request);
+        var authHeader = context.HttpContext.Request.Headers["Authorization"].ToString();
         ClaimsPrincipal principal = null;
         try
         {
@@ -32,6 +33,7 @@ public class CutomAuth : Attribute, IAuthorizationFilter
         if (principal == null)
         {
             var refreshToken = context.HttpContext.Request.Cookies["RefreshToken"];
+            var authRefreshHeader = context.HttpContext.Request.Headers["Refresh-Token"].ToString();
             if (string.IsNullOrEmpty(refreshToken))
             {
                 context.Result = new UnauthorizedResult();

@@ -8,8 +8,4 @@ public interface IBooksRepo
     public bool AddBook(Book book);
     public bool UpdateBook(Book book);
     public Book Book(int id);
-
-
-
-
 }

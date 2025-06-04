@@ -34,7 +34,7 @@ public class TokenService : ITokenService
                     new Claim(ClaimTypes.Email, email),
                     new Claim("userId", id.ToString() ),
                 }),
-            Expires = DateTime.UtcNow.AddMinutes(0.5),
+            Expires = DateTime.UtcNow.AddMinutes(60),
             Issuer = _issuer,
             Audience = _audience,
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256)
@@ -117,7 +117,7 @@ public class TokenService : ITokenService
             {
                     new Claim(ClaimTypes.Email, email)
                 }),
-            Expires = DateTime.UtcNow.AddMinutes(2),
+            Expires = DateTime.UtcNow.AddDays(1),
             Issuer = _issuer,
             Audience = _audience,
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256)

@@ -13,6 +13,7 @@ public class BooksRepo : IBooksRepo
         _context = context;
     }
 
+
     public IEnumerable<Book> Books()
     {
         return _context.Books.Where(b => b.IsDelete == false).ToList();
@@ -37,6 +38,4 @@ public class BooksRepo : IBooksRepo
     {
         return _context.Books.FirstOrDefault(b => b.Id == id);
     }
-
-
 }

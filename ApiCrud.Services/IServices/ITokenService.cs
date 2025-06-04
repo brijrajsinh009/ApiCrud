@@ -12,7 +12,4 @@ public interface ITokenService
     public string GenerateRefreshToken(string email);
     public ClaimsPrincipal? ValidateRefreshToken(string token);
     public string? GetEmailFromToken(string token);
-    
-    
-
 }

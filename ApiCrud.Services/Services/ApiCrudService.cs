@@ -2,6 +2,7 @@ using ApiCrud.Data.CustomModels;
 using ApiCrud.Data.IRepo;
 using ApiCrud.Data.Models;
 using ApiCrud.Services.IServices;
+using AutoMapper;
 
 namespace ApiCrud.Services.Services;
 
@@ -10,105 +11,99 @@ public class ApiCrudService : IApiCrudService
     private readonly IBooksRepo _bookRepo;
     private readonly IUserRepo _userRepo;
     private readonly ITokenService _tokenService;
+    private readonly IMapper _mapper;
 
-    public ApiCrudService(IBooksRepo bookRepo, IUserRepo userRepo,ITokenService tokenService)
+    public ApiCrudService(IBooksRepo bookRepo, IUserRepo userRepo, ITokenService tokenService, IMapper mapper)
     {
         _bookRepo = bookRepo;
         _userRepo = userRepo;
         _tokenService = tokenService;
+        _mapper = mapper;
     }
+
 
     public IEnumerable<BookViewModel> GetAllBooks()
     {
         IEnumerable<Book> booksDB = _bookRepo.Books();
-        IEnumerable<BookViewModel> books = Enumerable.Empty<BookViewModel>();
-        foreach (Book bookDB in booksDB)
-        {
-            BookViewModel book = new BookViewModel
-            {
-                Id = bookDB.Id,
-                Name = bookDB.Name,
-                Author = bookDB.Author,
-                Price = bookDB.Price
-            };
-            books = books.Append(book).ToList();
-        }
-
+        IEnumerable<BookViewModel> books = _mapper.Map<IEnumerable<BookViewModel>>(booksDB);
         return books;
     }
 
 
-
-    public (bool, int, string) AddBook(BookViewModel book)
+    public BookCrudResponseModel AddBook(BookViewModel book)
     {
-        Book model = new Book
+        Book model = _mapper.Map<Book>(book);
+        if (!_bookRepo.AddBook(model))
         {
-            Name = book.Name,
-            Author = book.Author,
-            Price = book.Price,
-            IsDelete = false,
-            CreatedOn = DateTime.Now,
-            ModifiedOn = DateTime.Now,
-        };
-        if (_bookRepo.AddBook(model))
-        {
-            return (true, model.Id, "Book Added!");
+            throw new InvalidOperationException("Book Not Added!");
         }
-        else
-            return (false, 0, "Book Not Added!");
+        BookCrudResponseModel response = new BookCrudResponseModel
+        {
+            Id = model.Id,
+            Message = "Book Added!"
+        };
+        return response;
     }
 
 
-
-    public (bool, string) DeleteBook(int id)
+    public BookCrudResponseModel DeleteBook(int id)
     {
         Book model = _bookRepo.Book(id);
         if (model == null || model.Id == 0)
         {
-            return (false, "Book Not Found!");
+            throw new KeyNotFoundException("Book not found!");
         }
         model.IsDelete = true;
         model.ModifiedOn = DateTime.Now;
-        if (_bookRepo.UpdateBook(model))
+        if (!_bookRepo.UpdateBook(model))
         {
-            return (true, "Book Deleted!");
+            throw new InvalidOperationException("Book not deleted!");
         }
-        else
-            return (false, "Book Not Deleted!");
+        BookCrudResponseModel response = new BookCrudResponseModel
+        {
+            Id = model.Id,
+            Message = "Book deleted!"
+        };
+        return response;
     }
 
 
-    public (bool, int, string) UpdateBook(BookViewModel book)
+    public BookCrudResponseModel UpdateBook(BookViewModel book)
     {
         Book model = _bookRepo.Book(book.Id);
         if (model == null || model.Id == 0)
         {
-            return (false, book.Id, "Book Not Found!");
+            throw new KeyNotFoundException("Book not found!");
         }
         model.Name = book.Name;
         model.Author = book.Author;
         model.Price = book.Price;
         model.ModifiedOn = DateTime.Now;
-        if (_bookRepo.UpdateBook(model))
+        if (!_bookRepo.UpdateBook(model))
         {
-            return (true, book.Id, "Book Updated!");
+            throw new InvalidOperationException("Book not edited!");
         }
-        else
-            return (false, book.Id, "Book Not Updated!");
+        BookCrudResponseModel response = new BookCrudResponseModel
+        {
+            Id = model.Id,
+            Message = "Book edited!"
+        };
+        return response;
+
     }
 
 
-    public (bool, string) Authenticate(LoginDetails model)
+    public string Authenticate(LoginDetails model)
     {
         User user = _userRepo.User(model.UserEmail);
-        if(user==null)
+        if (user == null)
         {
-            return (false, "Email not Found.");
+            throw new UnauthorizedAccessException("Email not found.");
         }
-        if(user.Password!=model.Password)
+        if (user.Password != model.Password)
         {
-            return (false, "Password not match.");
+            throw new UnauthorizedAccessException("Password does not match.");
         }
-        return (true,_tokenService.GenerateJwtToken(user.Name,user.Email,user.Id));
+        return _tokenService.GenerateJwtToken(user.Name, user.Email, user.Id);
     }
 }

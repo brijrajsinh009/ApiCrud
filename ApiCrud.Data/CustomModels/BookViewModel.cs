@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using ApiCrud.Data.Models;
 
 namespace ApiCrud.Data.CustomModels;
 

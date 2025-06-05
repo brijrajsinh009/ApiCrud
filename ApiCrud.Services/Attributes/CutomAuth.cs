@@ -15,9 +15,7 @@ public class CutomAuth : Attribute, IAuthorizationFilter
     {
         var jwtService = context.HttpContext.RequestServices.GetService(typeof(ITokenService)) as ITokenService;
         var userData = context.HttpContext.RequestServices.GetService(typeof(IUserRepo)) as IUserRepo;
-
-        var token = jwtService.GetJWTToken(context.HttpContext.Request);
-        var authHeader = context.HttpContext.Request.Headers["Authorization"].ToString();
+        var token = context.HttpContext.Request.Headers["Authorization"].ToString();
         ClaimsPrincipal principal = null;
         try
         {
@@ -30,10 +28,9 @@ public class CutomAuth : Attribute, IAuthorizationFilter
             context.Result = new UnauthorizedResult();
             return;
         }
+        var refreshToken = context.HttpContext.Request.Headers["Refresh-Token"].ToString();
         if (principal == null)
         {
-            var refreshToken = context.HttpContext.Request.Cookies["RefreshToken"];
-            var authRefreshHeader = context.HttpContext.Request.Headers["Refresh-Token"].ToString();
             if (string.IsNullOrEmpty(refreshToken))
             {
                 context.Result = new UnauthorizedResult();
@@ -68,7 +65,7 @@ public class CutomAuth : Attribute, IAuthorizationFilter
                 context.Result = new UnauthorizedResult();
                 return;
             }
-            token = jwtService.GenerateJwtToken(user.Name, user.Email,user.Id);
+            token = jwtService.GenerateJwtToken(user.Name, user.Email, user.Id);
             jwtService.SaveJWTToken(context.HttpContext.Response, token);
             refreshToken = jwtService.GenerateRefreshToken(user.Email);
             jwtService.SaveRefreshJWTToken(context.HttpContext.Response, refreshToken);
@@ -90,6 +87,9 @@ public class CutomAuth : Attribute, IAuthorizationFilter
 
         }
         context.HttpContext.User = principal;
+        context.HttpContext.Response.Headers.Add("Authorization", token);
+        context.HttpContext.Response.Headers.Add("Refresh-Token", refreshToken);
+
     }
 }
 

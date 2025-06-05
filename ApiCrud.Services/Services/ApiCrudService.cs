@@ -33,6 +33,8 @@ public class ApiCrudService : IApiCrudService
     public BookCrudResponseModel AddBook(BookViewModel book)
     {
         Book model = _mapper.Map<Book>(book);
+        model.CreatedOn = DateTime.Now;
+        model.ModifiedOn = DateTime.Now;
         if (!_bookRepo.AddBook(model))
         {
             throw new InvalidOperationException("Book Not Added!");
@@ -89,8 +91,25 @@ public class ApiCrudService : IApiCrudService
             Message = "Book edited!"
         };
         return response;
-
     }
+
+
+    public BookCrudResponseModel GetBook(int id)
+    {
+        Book model = _bookRepo.Book(id);
+        if (model == null || model.Id == 0)
+        {
+            throw new KeyNotFoundException("Book not found!");
+        }
+        BookCrudResponseModel response = new BookCrudResponseModel
+        {
+            Id = model.Id,
+            Message = "Book!",
+            Data = model
+        };
+        return response;
+    }
+
 
 
     public string Authenticate(LoginDetails model)

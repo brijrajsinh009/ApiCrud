@@ -9,4 +9,6 @@ public interface IApiCrudService
     public BookCrudResponseModel DeleteBook(int id);
     public BookCrudResponseModel UpdateBook(BookViewModel book);
     public string Authenticate(LoginDetails model);
+    public BookCrudResponseModel GetBook(int id);
+
 }

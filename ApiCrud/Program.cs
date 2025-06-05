@@ -15,7 +15,9 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAngularApp",
         policy => policy.WithOrigins("http://localhost:4200")
                         .AllowAnyHeader()
-                        .AllowAnyMethod());
+                        .AllowAnyMethod()
+                        .AllowCredentials()
+                        .WithExposedHeaders("Authorization", "Refresh-Token"));
 });
 
 builder.Services.AddDbContext<ApiCrudContext>(options =>

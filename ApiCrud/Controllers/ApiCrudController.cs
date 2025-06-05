@@ -38,8 +38,12 @@ public class ApiCrudController : ControllerBase
                 return BadRequest(responseModel);
             }
             string token = _apiCRUDService.Authenticate(model);
+            string[] tokens = new string[2];
+            tokens[0] = token;
+            tokens[1] = _tokenService.GenerateRefreshToken(model.UserEmail);
+            responseModel.Data = tokens;
             _tokenService.SaveJWTToken(Response, token);
-            _tokenService.SaveRefreshJWTToken(Response, _tokenService.GenerateRefreshToken(model.UserEmail));
+            _tokenService.SaveRefreshJWTToken(Response, tokens[1]);
             responseModel.Message = "Logged in";
             responseModel.Success = true;
             return Ok(responseModel);
@@ -63,7 +67,7 @@ public class ApiCrudController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    // [CutomAuth]
+    [CutomAuth]
     public IActionResult GetBooks()
     {
         try
@@ -89,6 +93,43 @@ public class ApiCrudController : ControllerBase
     }
 
 
+    [HttpGet("Book", Name = "GetBook")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [CutomAuth]
+    public IActionResult GetBook(int id)
+    {
+        try
+        {
+            if (id <= 0)
+            {
+                responseModel.Message = "Id not valid!";
+                responseModel.Success = false;
+                return BadRequest(responseModel);
+            }
+            BookCrudResponseModel response = _apiCRUDService.GetBook(id);
+            responseModel.Message = response.Message;
+            responseModel.Success = true;
+            responseModel.Data = response.Data;
+            return Ok(responseModel);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            responseModel.Message = "No Books.";
+            responseModel.Success = false;
+            return NotFound(responseModel);
+        }
+        catch (Exception ex)
+        {
+            responseModel.Message = ex.Message;
+            responseModel.Success = false;
+            return StatusCode(StatusCodes.Status500InternalServerError, responseModel);
+        }
+    }
+
+
     [HttpPost("AddBook", Name = "AddBook")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -104,7 +145,7 @@ public class ApiCrudController : ControllerBase
                 responseModel.Success = false;
                 return BadRequest(responseModel);
             }
-             if (newBook.Id != 0)
+            if (newBook.Id != 0)
             {
                 responseModel.Message = "Id not valid!";
                 responseModel.Success = false;
@@ -114,7 +155,7 @@ public class ApiCrudController : ControllerBase
             responseModel.Message = response.Message;
             responseModel.Success = true;
             responseModel.Data = response.Id;
-            return Ok(response);
+            return Ok(responseModel);
         }
         catch (Exception ex)
         {

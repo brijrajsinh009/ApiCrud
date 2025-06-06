@@ -28,7 +28,7 @@ public class CutomAuth : Attribute, IAuthorizationFilter
             context.Result = new UnauthorizedResult();
             return;
         }
-        var refreshToken = context.HttpContext.Request.Headers["Refresh-Token"].ToString();
+        var refreshToken = context.HttpContext.Request.Headers["RefreshToken"].ToString();
         if (principal == null)
         {
             if (string.IsNullOrEmpty(refreshToken))
@@ -88,7 +88,7 @@ public class CutomAuth : Attribute, IAuthorizationFilter
         }
         context.HttpContext.User = principal;
         context.HttpContext.Response.Headers.Add("Authorization", token);
-        context.HttpContext.Response.Headers.Add("Refresh-Token", refreshToken);
+        context.HttpContext.Response.Headers.Add("RefreshToken", refreshToken);
 
     }
 }

@@ -17,7 +17,7 @@ builder.Services.AddCors(options =>
                         .AllowAnyHeader()
                         .AllowAnyMethod()
                         .AllowCredentials()
-                        .WithExposedHeaders("Authorization", "Refresh-Token"));
+                        .WithExposedHeaders("Authorization", "RefreshToken"));
 });
 
 builder.Services.AddDbContext<ApiCrudContext>(options =>
@@ -56,7 +56,7 @@ builder.Services.AddSwaggerGen(c =>
     c.AddSecurityDefinition("RefreshToken", new OpenApiSecurityScheme
     {
         Description = "Refresh token header",
-        Name = "Refresh-Token",
+        Name = "RefreshToken",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.ApiKey,
         Scheme = "RefreshToken"

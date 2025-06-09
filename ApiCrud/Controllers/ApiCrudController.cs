@@ -171,6 +171,7 @@ public class ApiCrudController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [CutomAuth]
     public IActionResult DeleteBook(int id)
     {
         try
@@ -206,6 +207,7 @@ public class ApiCrudController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [CutomAuth]
     public IActionResult UpdateBook([FromBody] BookViewModel book)
     {
         try

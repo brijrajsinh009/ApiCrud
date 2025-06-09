@@ -8,9 +8,11 @@ public class BookViewModel
     public int Id { get; set; }
 
     [Required]
+    [MaxLength(75, ErrorMessage = "Maximum 75 characters are allowed for Name.")]
     public string Name { get; set; } = null!;
 
     [Required]
+    [MaxLength(75, ErrorMessage = "Maximum 75 characters are allowed for Author Name.")]
     public string? Author { get; set; }
 
     [Required]

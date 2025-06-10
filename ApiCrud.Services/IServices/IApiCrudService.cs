@@ -10,5 +10,6 @@ public interface IApiCrudService
     public BookCrudResponseModel UpdateBook(BookViewModel book);
     public string Authenticate(LoginDetails model);
     public BookCrudResponseModel GetBook(int id);
-
+    public BookCrudResponseModel Registration(UserViewModel model);
+    public string AccessToken(string mail);
 }

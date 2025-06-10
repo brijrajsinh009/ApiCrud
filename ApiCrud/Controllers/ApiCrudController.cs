@@ -1,3 +1,5 @@
+using System.Data;
+using System.Security.Claims;
 using ApiCrud.Data.CustomModels;
 using ApiCrud.Services.Attributes;
 using ApiCrud.Services.IServices;
@@ -234,6 +236,80 @@ public class ApiCrudController : ControllerBase
             responseModel.Message = ex.Message;
             responseModel.Success = false;
             return NotFound(responseModel);
+        }
+        catch (Exception ex)
+        {
+            responseModel.Message = ex.Message;
+            responseModel.Success = false;
+            return StatusCode(StatusCodes.Status500InternalServerError, responseModel);
+        }
+    }
+
+
+    [HttpPost("Register", Name = "Register")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public IActionResult Register([FromBody] UserViewModel model)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+                responseModel.Message = string.Join("; ", errors);
+                responseModel.Success = false;
+                return BadRequest(responseModel);
+            }
+            BookCrudResponseModel response = _apiCRUDService.Registration(model);
+            responseModel.Message = response.Message;
+            responseModel.Success = true;
+            responseModel.Data = response.Id;
+            return Ok(responseModel);
+        }
+        catch (DuplicateNameException ex)
+        {
+            responseModel.Message = ex.Message;
+            responseModel.Success = false;
+            return StatusCode(StatusCodes.Status400BadRequest, responseModel);
+        }
+        catch (Exception ex)
+        {
+            responseModel.Message = ex.Message;
+            responseModel.Success = false;
+            return StatusCode(StatusCodes.Status500InternalServerError, responseModel);
+        }
+    }
+
+
+    [HttpPost("Tokens", Name = "Tokens")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public IActionResult Tokens([FromBody] string token)
+    {
+        try
+        {
+            ClaimsPrincipal principal = _tokenService.ValidateRefreshToken(token);
+            if (principal == null)
+            {
+                throw new UnauthorizedAccessException("invalide token!");
+            }
+            string email = _tokenService.GetEmailFromToken(token);
+            string[] tokens = new string[2];
+            tokens[0] = _apiCRUDService.AccessToken(email);
+            tokens[1] = _tokenService.GenerateRefreshToken(email);
+            responseModel.Message = "Tokens";
+            responseModel.Success = true;
+            responseModel.Data = tokens;
+            return Ok(responseModel);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            responseModel.Message = ex.Message;
+            responseModel.Success = false;
+            return StatusCode(StatusCodes.Status401Unauthorized, responseModel);
         }
         catch (Exception ex)
         {

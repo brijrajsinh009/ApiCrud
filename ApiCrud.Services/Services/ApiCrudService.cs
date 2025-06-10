@@ -1,3 +1,4 @@
+using System.Data;
 using ApiCrud.Data.CustomModels;
 using ApiCrud.Data.IRepo;
 using ApiCrud.Data.Models;
@@ -122,6 +123,44 @@ public class ApiCrudService : IApiCrudService
         if (user.Password != model.Password)
         {
             throw new UnauthorizedAccessException("Password does not match.");
+        }
+        return _tokenService.GenerateJwtToken(user.Name, user.Email, user.Id);
+    }
+
+
+
+    public BookCrudResponseModel Registration(UserViewModel model)
+    {
+        User oldUser = _userRepo.User(model.UserEmail);
+        if (oldUser != null)
+        {
+            throw new DuplicateNameException("Email Already Exist!");
+        }
+        User user = _mapper.Map<User>(model);
+        user.CreatedOn = DateTime.Now;
+        user.ModifiedOn = DateTime.Now;
+        user.IsDelete = false;
+        if (!_userRepo.AddUser(user))
+        {
+            throw new InvalidOperationException("User Not Added!");
+        }
+        BookCrudResponseModel response = new BookCrudResponseModel
+        {
+            Id = user.Id,
+            Message = "User Added!",
+            Data = user
+        };
+        return response;
+    }
+
+
+
+    public string AccessToken(string mail)
+    {
+        User user = _userRepo.User(mail);
+        if (user == null)
+        {
+            throw new UnauthorizedAccessException("Email not found.");
         }
         return _tokenService.GenerateJwtToken(user.Name, user.Email, user.Id);
     }

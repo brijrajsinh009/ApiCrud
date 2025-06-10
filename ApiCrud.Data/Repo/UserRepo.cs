@@ -18,4 +18,11 @@ public class UserRepo : IUserRepo
     {
         return _context.Users.FirstOrDefault(b => b.Email == email);
     }
+
+
+    public bool AddUser(User model)
+    {
+        _context.Users.Add(model);
+        return _context.SaveChanges() > 0;
+    }
 }

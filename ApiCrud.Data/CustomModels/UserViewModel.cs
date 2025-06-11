@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace ApiCrud.Data.CustomModels;
 
@@ -22,4 +23,6 @@ public class UserViewModel
     [Required(ErrorMessage = "Confirm Password is required")]
     [Compare("Password", ErrorMessage = "Passwords not match with Confirm Password.")]
     public string ConfirmPassword { get; set; } = null!;
+
+    public IFormFile? Image { get; set; }
 }

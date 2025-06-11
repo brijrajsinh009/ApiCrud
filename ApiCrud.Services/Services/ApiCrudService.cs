@@ -4,6 +4,7 @@ using ApiCrud.Data.IRepo;
 using ApiCrud.Data.Models;
 using ApiCrud.Services.IServices;
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
 
 namespace ApiCrud.Services.Services;
 
@@ -33,9 +34,22 @@ public class ApiCrudService : IApiCrudService
 
     public BookCrudResponseModel AddBook(BookViewModel book)
     {
+        // string itemImagePath = null;
+        // if (book.ImageFile != null && book.ImageFile.Length > 0)
+        // {
+        //     itemImagePath = UploadFile(book.ImageFile,"books");
+        //     if (itemImagePath == null)
+        //     {
+        //         Console.WriteLine("Failed to upload");
+        //     }
+        // }
         Book model = _mapper.Map<Book>(book);
         model.CreatedOn = DateTime.Now;
         model.ModifiedOn = DateTime.Now;
+        // if (itemImagePath != null)
+        // {
+        //     model.Image=itemImagePath;
+        // }
         if (!_bookRepo.AddBook(model))
         {
             throw new InvalidOperationException("Book Not Added!");
@@ -131,6 +145,15 @@ public class ApiCrudService : IApiCrudService
 
     public BookCrudResponseModel Registration(UserViewModel model)
     {
+        string itemImagePath = null;
+        if (model.Image != null && model.Image.Length > 0)
+        {
+            itemImagePath = UploadFile(model.Image,"profiles");
+            if (itemImagePath == null)
+            {
+                Console.WriteLine("Failed to upload");
+            }
+        }
         User oldUser = _userRepo.User(model.UserEmail);
         if (oldUser != null)
         {
@@ -140,6 +163,10 @@ public class ApiCrudService : IApiCrudService
         user.CreatedOn = DateTime.Now;
         user.ModifiedOn = DateTime.Now;
         user.IsDelete = false;
+        if (itemImagePath != null)
+        {
+            user.ProfileUrl=itemImagePath;
+        }
         if (!_userRepo.AddUser(user))
         {
             throw new InvalidOperationException("User Not Added!");
@@ -163,5 +190,34 @@ public class ApiCrudService : IApiCrudService
             throw new UnauthorizedAccessException("Email not found.");
         }
         return _tokenService.GenerateJwtToken(user.Name, user.Email, user.Id);
+    }
+
+
+    private string? UploadFile(IFormFile file,string path)
+    {
+        try
+        {
+            if (file != null && file.Length > 0)
+            {
+                var uploadFolder = Path.Combine(Directory.GetCurrentDirectory(), $"wwwroot/images/{path}");
+                if (!Directory.Exists(uploadFolder))
+                {
+                    Directory.CreateDirectory(uploadFolder);
+                }
+                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
+                var filePath = Path.Combine(uploadFolder, fileName);
+                using (var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true))
+                {
+                    file.CopyToAsync(fileStream);
+                }
+                return Path.Combine($"images/{path}", fileName).Replace("\\", "/");
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"File upload error: {e.Message}");
+            return null;
+        }
+        return null;
     }
 }

@@ -37,6 +37,9 @@ public partial class ApiCrudContext : DbContext
             entity.Property(e => e.CreatedOn)
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_on");
+            entity.Property(e => e.Image)
+                .HasMaxLength(255)
+                .HasColumnName("image");
             entity.Property(e => e.IsDelete)
                 .HasDefaultValueSql("false")
                 .HasColumnName("is_delete");
@@ -81,6 +84,9 @@ public partial class ApiCrudContext : DbContext
             entity.Property(e => e.PhoneNo)
                 .HasMaxLength(20)
                 .HasColumnName("phone_no");
+            entity.Property(e => e.ProfileUrl)
+                .HasMaxLength(255)
+                .HasColumnName("profile_url");
         });
 
         OnModelCreatingPartial(modelBuilder);

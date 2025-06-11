@@ -20,4 +20,6 @@ public partial class User
     public DateTime? CreatedOn { get; set; }
 
     public DateTime? ModifiedOn { get; set; }
+
+    public string? ProfileUrl { get; set; }
 }

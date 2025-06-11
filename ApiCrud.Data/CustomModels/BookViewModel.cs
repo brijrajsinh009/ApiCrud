@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using ApiCrud.Data.Models;
+using Microsoft.AspNetCore.Http;
 
 namespace ApiCrud.Data.CustomModels;
 
@@ -18,4 +19,8 @@ public class BookViewModel
     [Required]
     [Range(1, 999, ErrorMessage = "Enter the Price beetween 1 to 999")]
     public decimal? Price { get; set; }
+
+    // public IFormFile? ImageFile { get; set; }
+
+    public string? Image { get; set; }
 }

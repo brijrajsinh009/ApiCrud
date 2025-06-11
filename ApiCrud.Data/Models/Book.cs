@@ -18,4 +18,6 @@ public partial class Book
     public DateTime? CreatedOn { get; set; }
 
     public DateTime? ModifiedOn { get; set; }
+
+    public string? Image { get; set; }
 }

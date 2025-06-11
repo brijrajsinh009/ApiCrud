@@ -137,7 +137,7 @@ public class ApiCrudController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     [CutomAuth]
-    public IActionResult AddBook([FromBody] BookViewModel newBook)
+    public IActionResult AddBook([FromForm] BookViewModel newBook)
     {
         try
         {
@@ -250,7 +250,7 @@ public class ApiCrudController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public IActionResult Register([FromBody] UserViewModel model)
+    public IActionResult Register([FromForm] UserViewModel model)
     {
         try
         {
